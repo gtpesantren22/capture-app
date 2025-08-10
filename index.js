@@ -44,8 +44,8 @@ function findChromePath() {
 
 (async () => {
     try {
-        // const CHROME_PATH = findChromePath();
-        const CHROME_PATH = 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe';
+        const CHROME_PATH = findChromePath();
+        // const CHROME_PATH = 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe';
         console.log(`✅ Chrome ditemukan: ${CHROME_PATH}`);
 
         browser = await puppeteer.launch({
