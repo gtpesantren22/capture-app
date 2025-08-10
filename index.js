@@ -21,6 +21,7 @@ if (!fs.existsSync(folderPath)) {
 app.use(express.json());
 app.use(express.static('public'));
 app.use('/hasil_screen', express.static(folderPath));
+app.use('/capture-result', express.static(folderPath));
 
 /**
  * Fungsi cari lokasi Chrome/Chromium otomatis di server
