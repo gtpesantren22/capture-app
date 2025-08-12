@@ -9,6 +9,7 @@ require('dotenv').config();
 const app = express();
 let browser;
 const PORT = process.env.PORT || 3000;
+const CHR_PATH = process.env.CHR_PATH || findChromePath();
 const BOT_NAME = process.env.BOT_NAME || 'BotKu';
 const folderPath = path.join(__dirname, 'hasil_screen');
 
@@ -45,8 +46,7 @@ function findChromePath() {
 
 (async () => {
     try {
-        // const CHROME_PATH = findChromePath();
-        const CHROME_PATH = 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe';
+        const CHROME_PATH = CHR_PATH;
         console.log(`✅ Chrome ditemukan: ${CHROME_PATH}`);
 
         browser = await puppeteer.launch({
