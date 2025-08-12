@@ -45,8 +45,8 @@ function findChromePath() {
 
 (async () => {
     try {
-        const CHROME_PATH = findChromePath();
-        // const CHROME_PATH = 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe';
+        // const CHROME_PATH = findChromePath();
+        const CHROME_PATH = 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe';
         console.log(`✅ Chrome ditemukan: ${CHROME_PATH}`);
 
         browser = await puppeteer.launch({
@@ -67,6 +67,7 @@ app.get('/capture', async (req, res) => {
         if (!browser) return res.status(500).json({ status: false, message: 'Browser belum siap' });
 
         const url = req.query.url || 'https://example.com';
+        const nama_file = req.query.filename || 'https://example.com';
         console.log(`📸 Memulai screenshot: ${url}`);
 
         const page = await browser.newPage();
@@ -76,7 +77,8 @@ app.get('/capture', async (req, res) => {
         await page.waitForSelector('#capture');
         await new Promise(resolve => setTimeout(resolve, 5000));
 
-        const fileName = `WAQIAH_${moment().tz('Asia/Jakarta').format('YYYY-MM-DD')}.png`;
+        // const fileName = `WAQIAH_${moment().tz('Asia/Jakarta').format('YYYY-MM-DD')}.png`;
+        const fileName = `${nama_file}.png`;
         const savePath = path.join(folderPath, fileName);
 
         const element = await page.$('#capture');
