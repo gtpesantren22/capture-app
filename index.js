@@ -63,36 +63,61 @@ function findChromePath() {
 })();
 
 app.get('/capture', async (req, res) => {
+    let context;
     try {
-        if (!browser) return res.status(500).json({ status: false, message: 'Browser belum siap' });
+        if (!browser) {
+            return res.status(500).json({ status: false, message: 'Browser belum siap' });
+        }
 
-        const url = req.query.url || 'https://example.com';
-        const nama_file = req.query.filename || 'https://example.com';
+        const url = req.query.url;
+        const nama_file = req.query.filename || `capture_${Date.now()}`;
+
         console.log(`📸 Memulai screenshot: ${url}`);
 
-        const page = await browser.newPage();
-        await page.setViewport({ width: 1000, height: 800 });
-        await page.goto(url, { waitUntil: 'networkidle2' });
+        context = await browser.createIncognitoBrowserContext();
+        const page = await context.newPage();
 
-        await page.waitForSelector('#capture');
-        await new Promise(resolve => setTimeout(resolve, 5000));
+        await page.setCacheEnabled(false);
+        await page.setUserAgent(
+          'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+        );
 
-        // const fileName = `WAQIAH_${moment().tz('Asia/Jakarta').format('YYYY-MM-DD')}.png`;
+        await page.setViewport({
+            width: 1200,
+            height: 900,
+            deviceScaleFactor: 2
+        });
+
+        const client = await page.target().createCDPSession();
+        await client.send('Network.enable');
+        await client.send('Network.setBypassServiceWorker', { bypass: true });
+
+        await page.goto(url, { waitUntil: 'domcontentloaded' });
+
+        await page.waitForSelector('#capture', { visible: true });
+        await page.waitForFunction(() => {
+            const el = document.querySelector('#capture');
+            return el && el.offsetHeight > 100;
+        });
+
         const fileName = `${nama_file}.png`;
         const savePath = path.join(folderPath, fileName);
 
         const element = await page.$('#capture');
         await element.screenshot({ path: savePath });
-        await page.close();
+
+        await context.close();
 
         console.log('✅ Screenshot berhasil:', savePath);
-        res.json({ status: true, message: 'Screenshot berhasil', file: fileName });
+        res.json({ status: true, file: fileName });
 
     } catch (error) {
+        if (context) await context.close();
         console.error('❌ Gagal mengambil screenshot:', error);
-        res.status(500).json({ status: false, message: 'Gagal mengambil screenshot', error: error.toString() });
+        res.status(500).json({ status: false, error: error.toString() });
     }
 });
+
 
 process.on('SIGINT', async () => {
     if (browser) {
