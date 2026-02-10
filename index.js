@@ -2,7 +2,9 @@ const express = require('express');
 const puppeteer = require('puppeteer-core');
 const fs = require('fs');
 const path = require('path');
-const { execSync } = require('child_process');
+const {
+    execSync
+} = require('child_process');
 require('dotenv').config();
 
 const app = express();
@@ -22,6 +24,7 @@ if (!fs.existsSync(folderPath)) {
 // Middleware
 // =====================
 app.use(express.json());
+app.use(express.static('public'));
 app.use('/hasil_screen', express.static(folderPath));
 
 // =====================
@@ -207,10 +210,25 @@ app.delete('/delete/:filename', (req, res) => {
     const filePath = path.join(folderPath, req.params.filename);
     if (fs.existsSync(filePath)) {
         fs.unlinkSync(filePath);
-        res.json({ status: true });
+        res.json({
+            status: true
+        });
     } else {
-        res.status(404).json({ status: false });
+        res.status(404).json({
+            status: false
+        });
     }
+});
+
+// Hapus semua file 
+app.delete('/delete-all', (req, res) => {
+    fs.readdirSync(folderPath).forEach(file => {
+        fs.unlinkSync(path.join(folderPath, file));
+    });
+    res.json({
+        status: true,
+        message: 'Semua file dihapus'
+    });
 });
 
 // =====================
