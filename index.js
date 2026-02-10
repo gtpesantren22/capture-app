@@ -63,7 +63,6 @@ function findChromePath() {
 })();
 
 app.get('/capture', async (req, res) => {
-    let context;
     try {
         if (!browser) {
             return res.status(500).json({ status: false, message: 'Browser belum siap' });
@@ -74,8 +73,7 @@ app.get('/capture', async (req, res) => {
 
         console.log(`📸 Memulai screenshot: ${url}`);
 
-        context = await browser.createIncognitoBrowserContext();
-        const page = await context.newPage();
+        const page = await browser.newPage();
 
         await page.setCacheEnabled(false);
         await page.setUserAgent(
@@ -90,6 +88,8 @@ app.get('/capture', async (req, res) => {
 
         const client = await page.target().createCDPSession();
         await client.send('Network.enable');
+        await client.send('Network.clearBrowserCookies');
+        await client.send('Network.clearBrowserCache');
         await client.send('Network.setBypassServiceWorker', { bypass: true });
 
         await page.goto(url, { waitUntil: 'domcontentloaded' });
@@ -106,13 +106,12 @@ app.get('/capture', async (req, res) => {
         const element = await page.$('#capture');
         await element.screenshot({ path: savePath });
 
-        await context.close();
+        await page.close();
 
         console.log('✅ Screenshot berhasil:', savePath);
         res.json({ status: true, file: fileName });
 
     } catch (error) {
-        if (context) await context.close();
         console.error('❌ Gagal mengambil screenshot:', error);
         res.status(500).json({ status: false, error: error.toString() });
     }
