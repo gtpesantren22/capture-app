@@ -113,8 +113,7 @@ app.get('/capture', async (req, res) => {
         const element = await page.$('#capture');
         await element.screenshot({
             path: savePath,
-            type: 'png',
-            quality: 100
+            type: 'png'
         });
 
         // Clean up
