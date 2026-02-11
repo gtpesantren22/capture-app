@@ -67,30 +67,66 @@ app.get('/capture', async (req, res) => {
         if (!browser) return res.status(500).json({ status: false, message: 'Browser belum siap' });
 
         const url = req.query.url || 'https://example.com';
-        const nama_file = req.query.filename || 'https://example.com';
+        const nama_file = req.query.filename || 'default';
         console.log(`📸 Memulai screenshot: ${url}`);
 
         const page = await browser.newPage();
+        
+        // ⚡ DISABLE CACHE COMPLETELY
+        await page.setCacheEnabled(false);
+        
+        // ⚡ Clear cookies dan storage
+        const client = await page.target().createCDPSession();
+        await client.send('Network.clearBrowserCookies');
+        await client.send('Network.clearBrowserCache');
+        
+        // ⚡ Extra args untuk disable cache
         await page.setViewport({ width: 1000, height: 800 });
-        await page.goto(url, { waitUntil: 'networkidle2' });
+        
+        // ⚡ Navigasi dengan bypass cache
+        await page.goto(url, { 
+            waitUntil: 'networkidle2',
+            timeout: 30000
+        });
 
-        await page.waitForSelector('#capture');
-        await new Promise(resolve => setTimeout(resolve, 5000));
+        // Tunggu element
+        await page.waitForSelector('#capture', { timeout: 10000 });
+        
+        // Tunggu tambahan untuk memastikan konten selesai load
+        await page.waitForFunction(() => {
+            return document.readyState === 'complete';
+        });
+        
+        await new Promise(resolve => setTimeout(resolve, 2000));
 
-        // const fileName = `WAQIAH_${moment().tz('Asia/Jakarta').format('YYYY-MM-DD')}.png`;
-        const fileName = `${nama_file}.png`;
+        const fileName = `${nama_file}_${Date.now()}.png`;
         const savePath = path.join(folderPath, fileName);
 
         const element = await page.$('#capture');
-        await element.screenshot({ path: savePath });
+        await element.screenshot({ 
+            path: savePath,
+            type: 'png',
+            quality: 100
+        });
+        
+        // Clean up
         await page.close();
 
         console.log('✅ Screenshot berhasil:', savePath);
-        res.json({ status: true, message: 'Screenshot berhasil', file: fileName });
+        res.json({ 
+            status: true, 
+            message: 'Screenshot berhasil', 
+            file: fileName,
+            url: `/hasil_screen/${fileName}`
+        });
 
     } catch (error) {
         console.error('❌ Gagal mengambil screenshot:', error);
-        res.status(500).json({ status: false, message: 'Gagal mengambil screenshot', error: error.toString() });
+        res.status(500).json({ 
+            status: false, 
+            message: 'Gagal mengambil screenshot', 
+            error: error.toString() 
+        });
     }
 });
 
